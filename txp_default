@@ -4,20 +4,20 @@
 # window names (leave empty not to use window)
 WIN_NAME[1]=vim
 WIN_NAME[2]=shell
-WIN_NAME[3]=foreman
-WIN_NAME[4]=proxy
-WIN_NAME[5]=
-WIN_NAME[6]=
+WIN_NAME[3]=server
+WIN_NAME[4]=console
+WIN_NAME[5]=rspec
+WIN_NAME[6]=logs
 WIN_NAME[7]=
 WIN_NAME[8]=
 
 # command to run on a keystroke or during startup
 COMMAND[1]="cd $WORKDIR && vim"
-COMMAND[2]="cd $WORKDIR && git status"
-COMMAND[3]="cd $WORKDIR && bundle exec rails server"
-COMMAND[4]="cd $WORKDIR && cd $WORKDIR/../smart-proxy/ && bin/smart-proxy"
-COMMAND[5]="cd $WORKDIR && clear"
-COMMAND[6]="cd $WORKDIR && clear"
+COMMAND[2]="cd $WORKDIR && clear"
+COMMAND[3]="cd $WORKDIR && rails server"
+COMMAND[4]="cd $WORKDIR && rails console"
+COMMAND[5]="cd $WORKDIR && rails spec"
+COMMAND[6]="cd $WORKDIR && tail -f -n100 log/*log"
 COMMAND[7]="cd $WORKDIR && clear"
 COMMAND[8]="cd $WORKDIR && clear"
 
@@ -25,7 +25,7 @@ COMMAND[8]="cd $WORKDIR && clear"
 AUTO_START[1]=1
 AUTO_START[2]=1
 AUTO_START[3]=1
-AUTO_START[4]=1
+AUTO_START[4]=0
 AUTO_START[5]=0
 AUTO_START[6]=0
 AUTO_START[7]=0
