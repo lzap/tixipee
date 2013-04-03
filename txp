@@ -1,0 +1,100 @@
+#!/bin/bash
+
+usage() {
+cat <<USAGE
+usage: $0 options
+
+Simple tmux project with key bindings. It is window-focused as I use tiling
+window manager (i3) and I don't prerer multiple tmux panes opened. What does
+this mean?
+
+Imagine vim in the first window, shell in second, server, tests and other
+tasks in other windows. And you can (re)start those with F5-F8 keys easily
+(like restart server, restart tests suite etc). That's all this does.
+
+OPTIONS:
+  -h         Show this message
+  -i         Copy example project as .git/.txp or .txp in the current dir
+
+EXAMPLE:
+
+  $0 => starts new session reading .git/.txp or .txp in the current dir
+  $0 -i => initialize new .txp project settings
+
+USAGE
+}
+
+while getopts "hi" opt; do
+  case $opt in
+    i)
+      INIT=1
+      ;;
+    h)
+      usage
+      exit
+      ;;
+    ?)
+      echo "Invalid option: $OPTARG" >&2
+      usage
+      exit
+      ;;
+  esac
+done
+
+# setup variables for config files
+export WORKDIR=$(pwd)
+PROJECT=$(basename $WORKDIR)
+
+# read default project settings
+SCRIPTDIR=$(readlink -f "$(dirname "$(readlink -f "$0")")")
+source "$SCRIPTDIR/txp_default"
+
+if [[ $INIT -eq 1 ]]; then
+  if [[ -d .git ]]; then
+    TARGET=".git/.txp"
+  else
+    TARGET=".txp"
+  fi
+  echo "Initializing project configuration in $TARGET"
+  cp -i "$SCRIPTDIR/txp_default" "$TARGET"
+  exit 0
+fi
+
+# read custom project settings
+[[ -d .git ]] && [[ -r .git/.txp ]] && source ".git/.txp"
+[[ -r .txp ]] && source ".txp"
+
+OLD_TMUX=${TMUX}
+unset TMUX
+cd $WORKDIR
+
+tmux start-server
+
+tmux has-session -t$PROJECT
+if [ $? != 0 ]; then
+  tmux new-session -d -s $PROJECT -n ${WIN_NAME[1]}
+  for W in 2 3 4 5 6 7 8; do
+    [[ -n "${WIN_NAME[$W]}" ]] && tmux new-window -t$PROJECT:$W -n ${WIN_NAME[$W]}
+  done
+
+  for W in 1 2 3 4 5 6 7 8; do
+    if [[ ${AUTO_START[$W]} -eq 1 ]]; then
+      tmux send-keys -t$PROJECT:$W "${COMMAND[$W]}" C-m
+    fi
+  done
+
+  for W in 1 2 3 4 5 6 7 8; do
+    [[ -n "${WIN_NAME[$W]}" ]] && tmux bind-key "${KEY[$W]}" kill-window -t$PROJECT:$W \\\; \
+      new-window -t$PROJECT:$W -n ${WIN_NAME[$W]} \\\; \
+      send-keys -t$PROJECT:$W "${COMMAND[$W]}" C-m
+  done
+fi
+
+if [ ! -z "${OLD_TMUX}" ]; then
+  TMUX=${OLD_TMUX}
+  unset OLD_TMUX
+  exec tmux switch-client -t $PROJECT
+else
+  tmux select-window -t$PROJECT:$FIRST_FOCUS
+  exec tmux attach-session -d -t $PROJECT
+fi
